@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOC 이미지 판독기</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f5f1;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: rgba(0,0,0,0.09);
+  --border2: rgba(0,0,0,0.16);
+  --text: #1a1917;
+  --text2: #6b6a65;
+  --text3: #9b9a95;
+  --green: #0f6e56;
+  --green-bg: #e1f5ee;
+  --red: #a32d2d;
+  --red-bg: #fcebeb;
+  --amber: #854f0b;
+  --amber-bg: #faeeda;
+  --accent: #0f6e56;
+  --radius: 10px;
+  --radius-sm: 7px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* TOPBAR */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 54px;
+  position: sticky; top: 0; z-index: 100;
+}
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; color: var(--text); }
+.logo-mark {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+}
+.logo-mark svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.nav { display: flex; gap: 2px; }
+.nav-btn {
+  padding: 6px 16px; border-radius: var(--radius-sm); font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; border: none; background: none;
+  color: var(--text2); transition: all 0.15s;
+}
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.on { background: var(--surface2); color: var(--text); font-weight: 500; }
+
+/* PAGES */
+.page { display: none; }
+.page.on { display: block; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 32px 24px; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 12px; letter-spacing: 0.02em; }
+
+/* FORM */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.field input, .field select {
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px; font-size: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--surface); color: var(--text);
+  transition: border-color 0.15s;
+  outline: none;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.row .field { flex: 1; min-width: 160px; }
+
+/* DROP ZONE */
+.drop-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 36px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface2);
+  transition: all 0.2s;
+  position: relative;
+}
+.drop-zone:hover { border-color: var(--accent); }
+.drop-zone.drag { border-color: var(--accent); background: var(--green-bg); }
+.drop-zone.loaded { padding: 14px; border-style: solid; border-color: var(--border2); }
+.drop-zone svg { width: 36px; height: 36px; stroke: var(--text3); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 10px; }
+.drop-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.drop-sub { font-size: 13px; color: var(--text3); }
+#preview { max-width: 100%; max-height: 300px; border-radius: 8px; display: none; margin: 0 auto; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 22px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 500;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer; border: none; transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-green { background: var(--accent); color: #fff; }
+.btn-green:hover { background: #0a5a44; }
+.btn-green:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-ghost {
+  background: none; color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.btn-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+
+/* VERDICT */
+.verdict-box {
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; gap: 12px;
+}
+.verdict-box.real { background: var(--green-bg); }
+.verdict-box.ai { background: var(--red-bg); }
+.verdict-box.doubt { background: var(--amber-bg); }
+.verdict-text { font-size: 15px; font-weight: 500; }
+.verdict-text.real { color: #085041; }
+.verdict-text.ai { color: var(--red); }
+.verdict-text.doubt { color: var(--amber); }
+.verdict-pill {
+  border-radius: 999px; padding: 5px 16px;
+  font-size: 13px; font-weight: 500; white-space: nowrap;
+}
+.verdict-pill.real { background: var(--green); color: #fff; }
+.verdict-pill.ai { background: #e24b4a; color: #fff; }
+.verdict-pill.doubt { background: #ba7517; color: #fff; }
+
+/* METRICS */
+.metric { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.metric:last-child { border-bottom: none; }
+.metric-label { min-width: 110px; color: var(--text2); }
+.metric-bar { flex: 1; height: 5px; background: var(--surface2); border-radius: 99px; margin: 0 14px; overflow: hidden; }
+.metric-fill { height: 100%; border-radius: 99px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); width: 0; }
+.metric-val { min-width: 38px; text-align: right; font-weight: 500; }
+
+/* TAGS */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tag {
+  font-size: 12px; padding: 3px 10px; border-radius: 99px;
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border);
+}
+
+/* NOTICE */
+.notice {
+  font-size: 12px; color: var(--text3);
+  background: var(--surface2); border-radius: var(--radius-sm);
+  padding: 9px 13px; margin-top: 12px; line-height: 1.6;
+}
+
+/* SAVE STATUS */
+.save-msg { font-size: 13px; color: var(--text2); }
+.save-msg.ok { color: var(--green); }
+.save-msg.err { color: var(--amber); }
+
+/* TABLE */
+.tbl-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: var(--surface2); padding: 10px 14px;
+  text-align: left; font-weight: 500; color: var(--text2);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafaf8; }
+.badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+.badge.real { background: var(--green-bg); color: #085041; }
+.badge.ai { background: var(--red-bg); color: var(--red); }
+.badge.doubt { background: var(--amber-bg); color: var(--amber); }
+
+/* EMPTY */
+.empty { text-align: center; padding: 56px 20px; color: var(--text3); }
+.empty svg { width: 40px; height: 40px; stroke: var(--border2); fill: none; stroke-width: 1.5; margin-bottom: 12px; }
+
+/* SETTINGS */
+.setting-row {
+  display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;
+  margin-top: 10px;
+}
+.setting-row .field { flex: 1; min-width: 200px; }
+
+/* SPINNER */
+.spin {
+  display: inline-block; width: 13px; height: 13px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: #fff; border-radius: 50%;
+  animation: rot 0.65s linear infinite;
+  vertical-align: -2px;
+}
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* PAGE HEADER */
+.page-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+}
+.page-hd h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+.count-badge {
+  font-size: 12px; padding: 3px 10px; border-radius: 99px;
+  background: var(--surface2); color: var(--text2); border: 1px solid var(--border);
+}
+
+/* FOOTER */
+.footer {
+  text-align: center; padding: 32px 20px;
+  font-size: 12px; color: var(--text3); border-top: 1px solid var(--border);
+  margin-top: 24px;
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </div>
+    VOC 이미지 판독기
+  </div>
+  <nav class="nav">
+    <button class="nav-btn on" onclick="go('analyze')">판독하기</button>
+    <button class="nav-btn" onclick="go('list')">결과 목록</button>
+    <button class="nav-btn" onclick="go('settings')">설정</button>
+  </nav>
+</div>
+
+<!-- PAGE: 판독하기 -->
+<div id="pg-analyze" class="page on">
+  <div class="wrap">
+
+    <div class="card">
+      <div class="card-title">담당자 정보</div>
+      <div class="row">
+        <div class="field">
+          <label>담당자 이름</label>
+          <input id="staffName" type="text" placeholder="이름을 입력하세요">
+        </div>
+        <div class="field">
+          <label>VOC 유형</label>
+          <select id="vocType">
+            <option value="">선택 안함</option>
+            <option>제품불량</option>
+            <option>배송문제</option>
+            <option>서비스불만</option>
+            <option>환불요청</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">이미지 업로드</div>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fInput').click()">
+        <input type="file" id="fInput" accept="image/*" style="display:none">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+        <div class="drop-title">이미지를 드래그하거나 클릭해서 업로드</div>
+        <div class="drop-sub">JPG · PNG · WebP 지원</div>
+        <img id="preview" alt="미리보기">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-green" id="analyzeBtn" style="display:none" onclick="doAnalyze()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          판독 시작
+        </button>
+        <button class="btn btn-ghost" id="resetBtn" style="display:none" onclick="doReset()">초기화</button>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="card" id="resultCard" style="display:none">
+      <div id="verdictBox"></div>
+      <div id="metrics"></div>
+      <div style="margin-top:14px;">
+        <div class="card-title">분석 근거</div>
+        <div id="detail" style="font-size:14px; line-height:1.7; color:var(--text);"></div>
+      </div>
+      <div class="tags" id="tags"></div>
+      <div class="btn-row">
+        <button class="btn btn-green" id="saveBtn" onclick="saveToSheet()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          구글 시트에 저장
+        </button>
+        <span class="save-msg" id="saveMsg"></span>
+      </div>
+      <div class="notice">
+        ⚠️ 본 분석은 AI 보조 판단으로, 법적 증거로 사용할 수 없습니다. 최종 판단은 담당자가 종합적으로 검토하세요.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PAGE: 결과 목록 -->
+<div id="pg-list" class="page">
+  <div class="wrap">
+    <div class="page-hd">
+      <h1>판독 결과 목록</h1>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="count-badge" id="countBadge">0건</span>
+        <button class="btn btn-ghost" style="font-size:13px;padding:7px 14px;" onclick="openSheet()" id="sheetOpenBtn" style="display:none">
+          구글 시트 열기 ↗
+        </button>
+        <button class="btn btn-ghost" style="font-size:13px;padding:7px 14px;" onclick="clearAll()">목록 초기화</button>
+      </div>
+    </div>
+    <div id="listArea"></div>
+  </div>
+</div>
+
+<!-- PAGE: 설정 -->
+<div id="pg-settings" class="page">
+  <div class="wrap">
+    <div class="page-hd"><h1>설정</h1></div>
+
+    <div class="card">
+      <div class="card-title">구글 스프레드시트 연동</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:4px;">판독 결과를 저장할 구글 시트 URL을 입력하세요.</p>
+      <div class="setting-row">
+        <div class="field">
+          <label>스프레드시트 URL</label>
+          <input id="sheetUrl" type="text" placeholder="https://docs.google.com/spreadsheets/d/...">
+        </div>
+        <button class="btn btn-green" onclick="saveUrl()" style="margin-bottom:1px;">저장</button>
+      </div>
+      <div id="urlSaveMsg" style="font-size:13px;color:var(--green);margin-top:8px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">시트 준비 방법</div>
+      <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:18px;">
+        <li><a href="https://sheets.new" target="_blank" style="color:var(--accent);">sheets.new</a> 에서 새 스프레드시트 생성</li>
+        <li>1행에 헤더 입력 (아래 순서대로)</li>
+        <li>시트 URL을 위에 붙여넣고 저장</li>
+      </ol>
+      <div style="margin-top:12px;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--text2);letter-spacing:0.01em;line-height:2;">
+        판독일시 &nbsp;|&nbsp; 담당자 &nbsp;|&nbsp; VOC유형 &nbsp;|&nbsp; 판정 &nbsp;|&nbsp; AI확률 &nbsp;|&nbsp; 실제확률 &nbsp;|&nbsp; 편집가능성 &nbsp;|&nbsp; 신뢰도 &nbsp;|&nbsp; 분석근거 &nbsp;|&nbsp; 태그
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">저장 항목 안내</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.9;">
+        판독 시 <strong>"구글 시트에 저장"</strong> 버튼을 누르면 결과가 시트에 자동으로 한 행씩 추가됩니다.<br>
+        구글 계정 로그인 상태에서 시트의 편집 권한이 있어야 저장됩니다.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="footer">VOC 이미지 판독기 · AI 보조 분석 도구 · 팀 내부 전용</div>
+
+<script>
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+let imgB64 = null, imgType = null, lastRes = null;
+const records = JSON.parse(localStorage.getItem('voc_records') || '[]');
+
+// --- NAV ---
+function go(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-' + page).classList.add('on');
+  event.currentTarget.classList.add('on');
+  if (page === 'list') renderList();
+}
+
+// --- DROP ZONE ---
+const dz = document.getElementById('dropZone');
+const fi = document.getElementById('fInput');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) loadFile(f);
+});
+fi.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(file) {
+  imgType = file.type;
+  const r = new FileReader();
+  r.onload = e => {
+    imgB64 = e.target.result.split(',')[1];
+    const prev = document.getElementById('preview');
+    prev.src = e.target.result;
+    prev.style.display = 'block';
+    dz.classList.add('loaded');
+    dz.querySelector('svg').style.display = 'none';
+    dz.querySelector('.drop-title').style.display = 'none';
+    dz.querySelector('.drop-sub').style.display = 'none';
+    document.getElementById('analyzeBtn').style.display = 'inline-flex';
+    document.getElementById('resetBtn').style.display = 'inline-flex';
+    document.getElementById('resultCard').style.display = 'none';
+  };
+  r.readAsDataURL(file);
+}
+
+// --- ANALYZE ---
+async function doAnalyze() {
+  if (!imgB64) return;
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> 분석 중...';
+  document.getElementById('resultCard').style.display = 'none';
+
+  const prompt = `당신은 이미지 진위 분석 전문가입니다. 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
+{"verdict":"실제" 또는 "AI생성" 또는 "의심","ai_probability":0~100 정수,"real_probability":0~100 정수,"manipulation_score":0~100 정수,"confidence":"높음" 또는 "중간" 또는 "낮음","detail":"100자 이내 한국어 분석 설명. 노이즈 패턴, 빛과 그림자 자연스러움, 텍스처, AI 생성 특징 등 근거 포함","tags":["태그1","태그2","태그3"]}`;
+
+  try {
+    const res = await fetch(CLAUDE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: imgType, data: imgB64 } },
+          { type: 'text', text: prompt }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.find(b => b.type === 'text')?.text || '';
+    lastRes = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    renderResult(lastRes);
+  } catch(e) {
+    alert('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg> 다시 판독';
+}
+
+function renderResult(d) {
+  const card = document.getElementById('resultCard');
+  card.style.display = 'block';
+
+  const cls = d.verdict === '실제' ? 'real' : d.verdict === 'AI생성' ? 'ai' : 'doubt';
+  const msg = d.verdict === '실제' ? '실제 사진일 가능성이 높습니다.' : d.verdict === 'AI생성' ? 'AI 생성 이미지일 가능성이 높습니다.' : '진위 판단이 불확실합니다. 추가 확인이 필요합니다.';
+
+  document.getElementById('verdictBox').innerHTML = `
+    <div class="verdict-box ${cls}">
+      <span class="verdict-text ${cls}">${msg}</span>
+      <span class="verdict-pill ${cls}">${d.verdict} · 신뢰도 ${d.confidence}</span>
+    </div>`;
+
+  const mColors = {
+    ai: d.ai_probability > 60 ? '#e24b4a' : d.ai_probability > 30 ? '#ba7517' : '#0f6e56',
+    real: d.real_probability > 60 ? '#0f6e56' : d.real_probability > 30 ? '#ba7517' : '#e24b4a',
+    manip: d.manipulation_score > 60 ? '#e24b4a' : d.manipulation_score > 30 ? '#ba7517' : '#0f6e56'
+  };
+  document.getElementById('metrics').innerHTML = `
+    <div class="metric"><span class="metric-label">AI 생성 확률</span><div class="metric-bar"><div class="metric-fill" style="width:${d.ai_probability}%;background:${mColors.ai}"></div></div><span class="metric-val" style="color:${mColors.ai}">${d.ai_probability}%</span></div>
+    <div class="metric"><span class="metric-label">실제 사진 확률</span><div class="metric-bar"><div class="metric-fill" style="width:${d.real_probability}%;background:${mColors.real}"></div></div><span class="metric-val" style="color:${mColors.real}">${d.real_probability}%</span></div>
+    <div class="metric"><span class="metric-label">편집/조작 가능성</span><div class="metric-bar"><div class="metric-fill" style="width:${d.manipulation_score}%;background:${mColors.manip}"></div></div><span class="metric-val" style="color:${mColors.manip}">${d.manipulation_score}%</span></div>`;
+
+  document.getElementById('detail').textContent = d.detail || '';
+  document.getElementById('tags').innerHTML = (d.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+  document.getElementById('saveMsg').textContent = '';
+  document.getElementById('saveBtn').disabled = false;
+  document.getElementById('saveBtn').innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg> 구글 시트에 저장';
+}
+
+// --- SAVE ---
+async function saveToSheet() {
+  if (!lastRes) return;
+  const btn = document.getElementById('saveBtn');
+  const msg = document.getElementById('saveMsg');
+  const staff = document.getElementById('staffName').value.trim() || '미입력';
+  const voc = document.getElementById('vocType').value || '-';
+  const now = new Date().toLocaleString('ko-KR');
+
+  const row = { datetime: now, staff, vocType: voc, verdict: lastRes.verdict,
+    aiProb: lastRes.ai_probability + '%', realProb: lastRes.real_probability + '%',
+    manip: lastRes.manipulation_score + '%', confidence: lastRes.confidence,
+    detail: lastRes.detail, tags: (lastRes.tags || []).join(', ') };
+
+  records.push(row);
+  localStorage.setItem('voc_records', JSON.stringify(records));
+
+  const url = localStorage.getItem('sheet_url') || '';
+  if (!url) {
+    msg.className = 'save-msg err';
+    msg.textContent = '⚠ 설정에서 구글 시트 URL을 먼저 입력하세요';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> 저장 중...';
+
+  try {
+    const sid = url.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1];
+    if (!sid) throw new Error('invalid');
+    const values = [[row.datetime, row.staff, row.vocType, row.verdict, row.aiProb, row.realProb, row.manip, row.confidence, row.detail, row.tags]];
+    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/A:J:append?valueInputOption=USER_ENTERED`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values })
+    });
+    if (r.ok) {
+      msg.className = 'save-msg ok';
+      msg.textContent = '✓ 구글 시트에 저장 완료!';
+    } else throw new Error('fail');
+  } catch(e) {
+    msg.className = 'save-msg err';
+    msg.textContent = '⚠ 시트 저장 실패 (앱 내 목록에는 저장됨)';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '다시 저장';
+}
+
+// --- LIST ---
+function renderList() {
+  const area = document.getElementById('listArea');
+  document.getElementById('countBadge').textContent = records.length + '건';
+  if (records.length === 0) {
+    area.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><div>아직 판독 결과가 없습니다</div></div>';
+    return;
+  }
+  const rows = [...records].reverse().map(r => {
+    const cls = r.verdict === '실제' ? 'real' : r.verdict === 'AI생성' ? 'ai' : 'doubt';
+    return `<tr>
+      <td style="white-space:nowrap;color:var(--text2);">${r.datetime}</td>
+      <td>${r.staff}</td>
+      <td>${r.vocType}</td>
+      <td><span class="badge ${cls}">${r.verdict}</span></td>
+      <td style="color:var(--text2);">${r.aiProb}</td>
+      <td style="color:var(--text2);">${r.confidence}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);">${r.detail}</td>
+    </tr>`;
+  }).join('');
+  area.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>판독일시</th><th>담당자</th><th>VOC유형</th><th>판정</th><th>AI확률</th><th>신뢰도</th><th>분석근거</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+  const url = localStorage.getItem('sheet_url');
+  if (url) document.getElementById('sheetOpenBtn').style.display = 'inline-flex';
+}
+
+function clearAll() {
+  if (!records.length || !confirm('목록을 전체 초기화할까요?')) return;
+  records.length = 0;
+  localStorage.setItem('voc_records', JSON.stringify([]));
+  renderList();
+}
+
+function openSheet() {
+  const url = localStorage.getItem('sheet_url');
+  if (url) window.open(url, '_blank');
+}
+
+// --- SETTINGS ---
+window.onload = () => {
+  const saved = localStorage.getItem('sheet_url');
+  if (saved) document.getElementById('sheetUrl').value = saved;
+};
+
+function saveUrl() {
+  const url = document.getElementById('sheetUrl').value.trim();
+  localStorage.setItem('sheet_url', url);
+  document.getElementById('urlSaveMsg').textContent = url ? '✓ 저장되었습니다.' : '';
+}
+
+// --- RESET ---
+function doReset() {
+  imgB64 = null; imgType = null; lastRes = null;
+  const prev = document.getElementById('preview');
+  prev.style.display = 'none'; prev.src = '';
+  dz.classList.remove('loaded', 'drag');
+  dz.querySelector('svg').style.display = 'block';
+  dz.querySelector('.drop-title').style.display = 'block';
+  dz.querySelector('.drop-sub').style.display = 'block';
+  document.getElementById('analyzeBtn').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('resultCard').style.display = 'none';
+  fi.value = '';
+}
+</script>
+</body>
+</html>
