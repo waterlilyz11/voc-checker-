@@ -51,12 +51,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 .row { display: flex; gap: 12px; flex-wrap: wrap; }
 .row .field { flex: 1; min-width: 160px; }
 
-/* API KEY BANNER */
-.api-banner { background: #fffbf0; border: 1px solid #f0d080; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.api-banner svg { width: 20px; height: 20px; stroke: #b8860b; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-.api-banner-text { flex: 1; font-size: 13px; color: #7a5c00; }
-.api-banner-text strong { font-weight: 600; }
-.api-input-row { display: flex; gap: 8px; margin-top: 10px; width: 100%; }
+.api-banner { background: #fffbf0; border: 1px solid #f0d080; border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px; }
+.api-banner-title { font-size: 14px; font-weight: 600; color: #7a5c00; margin-bottom: 6px; }
+.api-banner-desc { font-size: 13px; color: #9a7a20; margin-bottom: 12px; line-height: 1.6; }
+.api-input-row { display: flex; gap: 8px; }
 .api-input-row input { flex: 1; border: 1px solid #e0c060; border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; font-family: monospace; background: #fffdf5; color: var(--text); outline: none; }
 .api-input-row input:focus { border-color: #b8860b; }
 
@@ -100,9 +98,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: va
 
 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .tag { font-size: 12px; padding: 3px 10px; border-radius: 99px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
-
 .notice { font-size: 12px; color: var(--text3); background: var(--surface2); border-radius: var(--radius-sm); padding: 9px 13px; margin-top: 12px; line-height: 1.6; }
-.save-msg { font-size: 13px; color: var(--text2); }
+.save-msg { font-size: 13px; }
 .save-msg.ok { color: var(--green); }
 .save-msg.err { color: var(--amber); }
 
@@ -116,19 +113,17 @@ tr:hover td { background: #fafaf8; }
 .badge.real { background: var(--green-bg); color: #085041; }
 .badge.ai { background: var(--red-bg); color: var(--red); }
 .badge.doubt { background: var(--amber-bg); color: var(--amber); }
-
 .empty { text-align: center; padding: 56px 20px; color: var(--text3); font-size: 14px; }
 
 .setting-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-top: 10px; }
 .setting-row .field { flex: 1; min-width: 200px; }
-
 .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: rot 0.65s linear infinite; vertical-align: -2px; }
 @keyframes rot { to { transform: rotate(360deg); } }
-
 .page-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
 .page-hd h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
 .count-badge { font-size: 12px; padding: 3px 10px; border-radius: 99px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
 .footer { text-align: center; padding: 32px 20px; font-size: 12px; color: var(--text3); border-top: 1px solid var(--border); margin-top: 24px; }
+.free-badge { display: inline-block; background: #e8f5ee; color: #085041; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; border: 1px solid #9fe1cb; margin-left: 6px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -139,6 +134,7 @@ tr:hover td { background: #fafaf8; }
       <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     </div>
     VOC 이미지 판독기
+    <span class="free-badge">무료</span>
   </div>
   <nav class="nav">
     <button class="nav-btn on" id="tab-analyze" onclick="go('analyze', this)">판독하기</button>
@@ -151,15 +147,15 @@ tr:hover td { background: #fafaf8; }
 <div id="pg-analyze" class="page on">
   <div class="wrap">
 
-    <!-- API KEY BANNER -->
     <div class="api-banner" id="apiBanner">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <div class="api-banner-text">
-        <strong>Claude API 키가 필요해요.</strong> 설정에서 한 번만 입력하면 이후엔 자동으로 사용됩니다.
-        <div class="api-input-row">
-          <input type="password" id="quickApiKey" placeholder="sk-ant-api03-...">
-          <button class="btn btn-green btn-sm" onclick="saveApiKeyQuick()">저장하고 시작</button>
-        </div>
+      <div class="api-banner-title">🔑 Gemini API 키를 입력해주세요</div>
+      <div class="api-banner-desc">
+        Google AI Studio에서 무료로 발급받을 수 있어요.<br>
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#0f6e56;font-weight:500;">aistudio.google.com</a> → Get API Key → Create API Key
+      </div>
+      <div class="api-input-row">
+        <input type="password" id="quickApiKey" placeholder="AIza...">
+        <button class="btn btn-green btn-sm" onclick="saveApiKeyQuick()">저장하고 시작</button>
       </div>
     </div>
 
@@ -212,7 +208,7 @@ tr:hover td { background: #fafaf8; }
       <div class="tags" id="tags"></div>
       <div class="btn-row">
         <button class="btn btn-green" id="saveBtn" onclick="saveToSheet()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap: round; stroke-linejoin: round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
           구글 시트에 저장
         </button>
         <span class="save-msg" id="saveMsg"></span>
@@ -243,19 +239,22 @@ tr:hover td { background: #fafaf8; }
     <div class="page-hd"><h1>설정</h1></div>
 
     <div class="card">
-      <div class="card-title">🔑 Claude API 키</div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:4px;">
-        Anthropic 콘솔(<a href="https://console.anthropic.com" target="_blank" style="color:var(--accent);">console.anthropic.com</a>)에서 발급받은 API 키를 입력하세요.<br>
-        키는 이 브라우저에만 저장되며 외부로 전송되지 않습니다.
+      <div class="card-title">🔑 Gemini API 키 <span class="free-badge">무료</span></div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:4px;line-height:1.7;">
+        Google AI Studio에서 무료로 발급받으세요.<br>
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent);font-weight:500;">aistudio.google.com</a> 접속 → <strong>Get API Key</strong> → <strong>Create API Key</strong> → 복사
       </p>
       <div class="setting-row">
         <div class="field">
           <label>API 키</label>
-          <input id="apiKeyInput" type="password" placeholder="sk-ant-api03-...">
+          <input id="apiKeyInput" type="password" placeholder="AIza...">
         </div>
         <button class="btn btn-green btn-sm" onclick="saveApiKey()" style="margin-bottom:1px;">저장</button>
       </div>
       <div id="apiKeySaveMsg" style="font-size:13px;color:var(--green);margin-top:8px;"></div>
+      <div style="margin-top:12px;background:#fffbf0;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:#7a5c00;line-height:1.7;">
+        무료 한도: 하루 1,500회 · 분당 15회 요청 가능 (4명 팀 사용에 충분해요)
+      </div>
     </div>
 
     <div class="card">
@@ -281,32 +280,32 @@ tr:hover td { background: #fafaf8; }
   </div>
 </div>
 
-<div class="footer">VOC 이미지 판독기 · AI 보조 분석 도구 · 팀 내부 전용</div>
+<div class="footer">VOC 이미지 판독기 · Powered by Google Gemini (무료) · 팀 내부 전용</div>
 
 <script>
+const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 let imgB64 = null, imgType = null, lastRes = null;
 const records = JSON.parse(localStorage.getItem('voc_records') || '[]');
 
-function getApiKey() { return localStorage.getItem('api_key') || ''; }
+function getApiKey() { return localStorage.getItem('gemini_api_key') || ''; }
 
 function checkApiBanner() {
-  const banner = document.getElementById('apiBanner');
-  if (banner) banner.style.display = getApiKey() ? 'none' : 'flex';
+  document.getElementById('apiBanner').style.display = getApiKey() ? 'none' : 'block';
 }
 
 function saveApiKeyQuick() {
   const val = document.getElementById('quickApiKey').value.trim();
-  if (!val) return;
-  localStorage.setItem('api_key', val);
+  if (!val) { alert('API 키를 입력해주세요.'); return; }
+  localStorage.setItem('gemini_api_key', val);
   document.getElementById('apiBanner').style.display = 'none';
   document.getElementById('apiKeyInput').value = val;
-  alert('API 키가 저장되었습니다! 이제 판독을 시작할 수 있어요.');
+  document.getElementById('apiKeySaveMsg').textContent = '✓ 저장되었습니다.';
 }
 
 function saveApiKey() {
   const val = document.getElementById('apiKeyInput').value.trim();
   if (!val) return;
-  localStorage.setItem('api_key', val);
+  localStorage.setItem('gemini_api_key', val);
   document.getElementById('apiKeySaveMsg').textContent = '✓ 저장되었습니다.';
   checkApiBanner();
 }
@@ -350,36 +349,43 @@ function loadFile(file) {
 
 async function doAnalyze() {
   const apiKey = getApiKey();
-  if (!apiKey) { alert('설정에서 API 키를 먼저 입력해주세요.'); return; }
+  if (!apiKey) { alert('API 키를 먼저 입력해주세요.'); return; }
   if (!imgB64) return;
   const btn = document.getElementById('analyzeBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> 분석 중...';
   document.getElementById('resultCard').style.display = 'none';
 
-  const prompt = `당신은 이미지 진위 분석 전문가입니다. 아래 JSON 형식으로만 응답하세요. 다른 텍스트 없이 JSON만 출력하세요.
-{"verdict":"실제" 또는 "AI생성" 또는 "의심","ai_probability":0~100 정수,"real_probability":0~100 정수,"manipulation_score":0~100 정수,"confidence":"높음" 또는 "중간" 또는 "낮음","detail":"100자 이내 한국어 분석 설명. 노이즈 패턴, 빛과 그림자 자연스러움, 텍스처, AI 생성 특징 등 근거 포함","tags":["태그1","태그2","태그3"]}`;
+  const prompt = `당신은 이미지 진위 분석 전문가입니다. 아래 JSON 형식으로만 응답하세요. 마크다운이나 다른 텍스트 없이 순수 JSON만 출력하세요.
+{"verdict":"실제" 또는 "AI생성" 또는 "의심","ai_probability":0에서100 사이 정수,"real_probability":0에서100 사이 정수,"manipulation_score":0에서100 사이 정수,"confidence":"높음" 또는 "중간" 또는 "낮음","detail":"100자 이내 한국어 분석 설명. 노이즈 패턴, 빛과 그림자 자연스러움, 텍스처, AI 생성 특징 등 근거 포함","tags":["태그1","태그2","태그3"]}`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(`${GEMINI_API}?key=${apiKey}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
-        messages: [{ role: 'user', content: [
-          { type: 'image', source: { type: 'base64', media_type: imgType, data: imgB64 } },
-          { type: 'text', text: prompt }
-        ]}]
+        contents: [{ parts: [
+          { inline_data: { mime_type: imgType, data: imgB64 } },
+          { text: prompt }
+        ]}],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1000 }
       })
     });
-    if (res.status === 401) throw new Error('invalid_key');
+
+    if (res.status === 400 || res.status === 403) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'api_error');
+    }
+
     const data = await res.json();
-    const raw = data.content?.find(b => b.type === 'text')?.text || '';
-    lastRes = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const cleaned = raw.replace(/```json|```/g, '').trim();
+    lastRes = JSON.parse(cleaned);
     renderResult(lastRes);
   } catch(e) {
-    if (e.message === 'invalid_key') alert('API 키가 올바르지 않습니다. 설정에서 다시 확인해주세요.');
-    else alert('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    if (e.message.includes('API key')) alert('API 키가 올바르지 않습니다. 설정에서 다시 확인해주세요.');
+    else if (e instanceof SyntaxError) alert('분석 결과를 처리하는 중 오류가 발생했습니다. 다시 시도해주세요.');
+    else alert('오류: ' + e.message);
   }
 
   btn.disabled = false;
@@ -387,12 +393,15 @@ async function doAnalyze() {
 }
 
 function renderResult(d) {
-  const card = document.getElementById('resultCard');
-  card.style.display = 'block';
+  document.getElementById('resultCard').style.display = 'block';
   const cls = d.verdict === '실제' ? 'real' : d.verdict === 'AI생성' ? 'ai' : 'doubt';
   const msg = d.verdict === '실제' ? '실제 사진일 가능성이 높습니다.' : d.verdict === 'AI생성' ? 'AI 생성 이미지일 가능성이 높습니다.' : '진위 판단이 불확실합니다. 추가 확인이 필요합니다.';
   document.getElementById('verdictBox').innerHTML = `<div class="verdict-box ${cls}"><span class="verdict-text ${cls}">${msg}</span><span class="verdict-pill ${cls}">${d.verdict} · 신뢰도 ${d.confidence}</span></div>`;
-  const mc = { ai: d.ai_probability > 60 ? '#e24b4a' : d.ai_probability > 30 ? '#ba7517' : '#0f6e56', real: d.real_probability > 60 ? '#0f6e56' : d.real_probability > 30 ? '#ba7517' : '#e24b4a', manip: d.manipulation_score > 60 ? '#e24b4a' : d.manipulation_score > 30 ? '#ba7517' : '#0f6e56' };
+  const mc = {
+    ai: d.ai_probability > 60 ? '#e24b4a' : d.ai_probability > 30 ? '#ba7517' : '#0f6e56',
+    real: d.real_probability > 60 ? '#0f6e56' : d.real_probability > 30 ? '#ba7517' : '#e24b4a',
+    manip: d.manipulation_score > 60 ? '#e24b4a' : d.manipulation_score > 30 ? '#ba7517' : '#0f6e56'
+  };
   document.getElementById('metrics').innerHTML = `
     <div class="metric"><span class="metric-label">AI 생성 확률</span><div class="metric-bar"><div class="metric-fill" style="width:${d.ai_probability}%;background:${mc.ai}"></div></div><span class="metric-val" style="color:${mc.ai}">${d.ai_probability}%</span></div>
     <div class="metric"><span class="metric-label">실제 사진 확률</span><div class="metric-bar"><div class="metric-fill" style="width:${d.real_probability}%;background:${mc.real}"></div></div><span class="metric-val" style="color:${mc.real}">${d.real_probability}%</span></div>
@@ -413,15 +422,19 @@ async function saveToSheet() {
   const row = { datetime: now, staff, vocType: voc, verdict: lastRes.verdict, aiProb: lastRes.ai_probability + '%', realProb: lastRes.real_probability + '%', manip: lastRes.manipulation_score + '%', confidence: lastRes.confidence, detail: lastRes.detail, tags: (lastRes.tags || []).join(', ') };
   records.push(row);
   localStorage.setItem('voc_records', JSON.stringify(records));
+
   const url = localStorage.getItem('sheet_url') || '';
   if (!url) { msg.className = 'save-msg err'; msg.textContent = '⚠ 설정에서 구글 시트 URL을 먼저 입력하세요'; return; }
+
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> 저장 중...';
   try {
     const sid = url.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1];
     if (!sid) throw new Error('invalid');
     const values = [[row.datetime, row.staff, row.vocType, row.verdict, row.aiProb, row.realProb, row.manip, row.confidence, row.detail, row.tags]];
-    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/A:J:append?valueInputOption=USER_ENTERED`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ values }) });
+    const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}/values/A:J:append?valueInputOption=USER_ENTERED`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ values })
+    });
     if (r.ok) { msg.className = 'save-msg ok'; msg.textContent = '✓ 구글 시트에 저장 완료!'; }
     else throw new Error('fail');
   } catch(e) { msg.className = 'save-msg err'; msg.textContent = '⚠ 시트 저장 실패 (앱 내 목록에는 저장됨)'; }
@@ -432,8 +445,7 @@ async function saveToSheet() {
 function renderList() {
   const area = document.getElementById('listArea');
   document.getElementById('countBadge').textContent = records.length + '건';
-  const url = localStorage.getItem('sheet_url');
-  document.getElementById('sheetOpenBtn').style.display = url ? 'inline-flex' : 'none';
+  document.getElementById('sheetOpenBtn').style.display = localStorage.getItem('sheet_url') ? 'inline-flex' : 'none';
   if (!records.length) { area.innerHTML = '<div class="empty">아직 판독 결과가 없습니다</div>'; return; }
   const rows = [...records].reverse().map(r => {
     const cls = r.verdict === '실제' ? 'real' : r.verdict === 'AI생성' ? 'ai' : 'doubt';
@@ -448,7 +460,6 @@ function clearAll() {
 }
 function openSheet() { const url = localStorage.getItem('sheet_url'); if (url) window.open(url, '_blank'); }
 function saveUrl() { const url = document.getElementById('sheetUrl').value.trim(); localStorage.setItem('sheet_url', url); document.getElementById('urlSaveMsg').textContent = url ? '✓ 저장되었습니다.' : ''; }
-
 function doReset() {
   imgB64 = null; imgType = null; lastRes = null;
   const prev = document.getElementById('preview');
@@ -464,10 +475,10 @@ function doReset() {
 }
 
 window.onload = () => {
-  const savedKey = localStorage.getItem('api_key');
-  if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
-  const savedUrl = localStorage.getItem('sheet_url');
-  if (savedUrl) document.getElementById('sheetUrl').value = savedUrl;
+  const k = localStorage.getItem('gemini_api_key');
+  if (k) document.getElementById('apiKeyInput').value = k;
+  const u = localStorage.getItem('sheet_url');
+  if (u) document.getElementById('sheetUrl').value = u;
   checkApiBanner();
 };
 </script>
