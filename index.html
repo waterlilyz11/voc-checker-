@@ -283,7 +283,7 @@ tr:hover td { background: #fafaf8; }
 <div class="footer">VOC 이미지 판독기 · Powered by Google Gemini (무료) · 팀 내부 전용</div>
 
 <script>
-const GEMINI_API = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent';
 let imgB64 = null, imgType = null, lastRes = null;
 const records = JSON.parse(localStorage.getItem('voc_records') || '[]');
 
