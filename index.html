@@ -373,6 +373,7 @@ async function doAnalyze() {
     if (!jsonMatch) throw new Error('no_json');
     lastRes = JSON.parse(jsonMatch[0]);
     renderResult(lastRes);
+    autoSave(lastRes);
   } catch(e) {
     if (e.message === 'invalid_key') alert('API 키가 올바르지 않습니다. 설정 탭에서 다시 확인해주세요.');
     else if (e.message === 'no_json') alert('분석 결과 형식 오류입니다. 다시 시도해주세요.');
@@ -403,6 +404,20 @@ function renderResult(d) {
 }
 
 
+
+function autoSave(d) {
+  const staff = document.getElementById('staffName').value.trim() || '미입력';
+  const voc = document.getElementById('vocType').value || '-';
+  const now = new Date().toLocaleString('ko-KR');
+  const row = {
+    datetime: now, staff, vocType: voc, verdict: d.verdict,
+    aiProb: d.ai_probability + '%', realProb: d.real_probability + '%',
+    manip: d.manipulation_score + '%', confidence: d.confidence,
+    detail: d.detail, tags: (d.tags || []).join(', ')
+  };
+  records.push(row);
+  localStorage.setItem('voc_records', JSON.stringify(records));
+}
 
 function renderList() {
   const area = document.getElementById('listArea');
