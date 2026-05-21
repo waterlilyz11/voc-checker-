@@ -399,8 +399,7 @@ function renderResult(d) {
     <div class="metric"><span class="metric-label">편집/조작 가능성</span><div class="metric-bar"><div class="metric-fill" style="width:${d.manipulation_score}%;background:${mc.manip}"></div></div><span class="metric-val" style="color:${mc.manip}">${d.manipulation_score}%</span></div>`;
   document.getElementById('detail').textContent = d.detail || '';
   document.getElementById('tags').innerHTML = (d.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
-  document.getElementById('saveMsg').textContent = '';
-  document.getElementById('saveBtn').disabled = false;
+
 }
 
 
